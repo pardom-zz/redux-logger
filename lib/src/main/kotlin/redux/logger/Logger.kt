@@ -19,17 +19,17 @@ import redux.logger.Logger.Event.STATE
  * limitations under the License.
  */
 
-interface Logger<in S : Any, in A : Any> {
+interface Logger<in S : Any> {
 
-	fun log(event: Event, action: A, state: S)
+	fun log(event: Event, action: Any, state: S)
 
 	enum class Event {
 		DISPATCH, STATE
 	}
 
-	class ConsoleLogger<in S : Any, in A : Any> : Logger<S, A> {
+	class ConsoleLogger<in S : Any> : Logger<S> {
 
-		override fun log(event: Event, action: A, state: S) {
+		override fun log(event: Event, action: Any, state: S) {
 			when (event) {
 				DISPATCH -> println("Dispatching action: $action")
 				STATE -> println("Next state: $state")

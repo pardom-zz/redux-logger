@@ -23,15 +23,15 @@ import redux.logger.Logger.Event.STATE
  * limitations under the License.
  */
 
-class LoggerMiddleware<S : Any, A : Any> : Middleware<S, A> {
+class LoggerMiddleware<S : Any> : Middleware<S> {
 
-	private val logger: Logger<S, A>
+	private val logger: Logger<S>
 
-	private constructor(logger: Logger<S, A>) {
+	private constructor(logger: Logger<S>) {
 		this.logger = logger
 	}
 
-	override fun dispatch(store: Store<S, A>, action: A, next: Dispatcher<A>): A {
+	override fun dispatch(store: Store<S>, action: Any, next: Dispatcher): Any {
 		logger.log(DISPATCH, action, store.getState())
 		val result = next.dispatch(action)
 		logger.log(STATE, action, store.getState())
@@ -40,7 +40,7 @@ class LoggerMiddleware<S : Any, A : Any> : Middleware<S, A> {
 
 	companion object {
 
-		fun <S : Any, A : Any> create(logger: Logger<S, A> = ConsoleLogger()): LoggerMiddleware<S, A> {
+		fun <S : Any> create(logger: Logger<S> = ConsoleLogger()): LoggerMiddleware<S> {
 			return LoggerMiddleware(logger)
 		}
 
