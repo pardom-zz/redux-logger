@@ -10,10 +10,6 @@ repositories {
 	maven { url "http://repository.jetbrains.com/all" }
 }
 
-configurations {
-	ktlint
-}
-
 sourceSets {
 	main.kotlin.srcDirs += '../src/main/kotlin'
 }

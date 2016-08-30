@@ -21,21 +21,21 @@ import redux.logger.Logger.Event.STATE
 
 interface Logger<in S : Any> {
 
-	fun log(event: Event, action: Any, state: S)
+    fun log(event: Event, action: Any, state: S)
 
-	enum class Event {
-		DISPATCH, STATE
-	}
+    enum class Event {
+        DISPATCH, STATE
+    }
 
-	class ConsoleLogger<in S : Any> : Logger<S> {
+    class ConsoleLogger<in S : Any> : Logger<S> {
 
-		override fun log(event: Event, action: Any, state: S) {
-			when (event) {
-				DISPATCH -> println("Dispatching action: $action")
-				STATE -> println("Next state: $state")
-			}
-		}
+        override fun log(event: Event, action: Any, state: S) {
+            when (event) {
+                DISPATCH -> println("Dispatching action: $action")
+                STATE -> println("Next state: $state")
+            }
+        }
 
-	}
+    }
 
 }
