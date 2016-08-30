@@ -20,8 +20,8 @@ import org.jetbrains.spek.api.Spek
 
 class LoggerMiddlewareTest : Spek({
 
-	describe("LoggerMiddleware") {
+    describe("LoggerMiddleware") {
 
-	}
+    }
 
 })

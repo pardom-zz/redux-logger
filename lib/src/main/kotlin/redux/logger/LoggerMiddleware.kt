@@ -25,24 +25,25 @@ import redux.logger.Logger.Event.STATE
 
 class LoggerMiddleware<S : Any> : Middleware<S> {
 
-	private val logger: Logger<S>
+    private val logger: Logger<S>
 
-	private constructor(logger: Logger<S>) {
-		this.logger = logger
-	}
+    private constructor(logger: Logger<S>) {
+        this.logger = logger
+    }
 
-	override fun dispatch(store: Store<S>, action: Any, next: Dispatcher): Any {
-		logger.log(DISPATCH, action, store.getState())
-		val result = next.dispatch(action)
-		logger.log(STATE, action, store.getState())
-		return result
-	}
+    override fun dispatch(store: Store<S>, action: Any, next: Dispatcher): Any {
+        logger.log(DISPATCH, action, store.getState())
+        val result = next.dispatch(action)
+        logger.log(STATE, action, store.getState())
+        return result
+    }
 
-	companion object {
+    companion object {
 
-		fun <S : Any> create(logger: Logger<S> = ConsoleLogger()): LoggerMiddleware<S> {
-			return LoggerMiddleware(logger)
-		}
+        fun <S : Any> create(logger: Logger<S> = ConsoleLogger()): LoggerMiddleware<S> {
+            return LoggerMiddleware(logger)
+        }
 
-	}
+    }
+
 }
