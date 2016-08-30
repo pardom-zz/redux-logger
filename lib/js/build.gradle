@@ -1,0 +1,62 @@
+apply plugin: 'kotlin2js'
+
+def slug = "redux-logger-kotlin"
+def outDir = "${buildDir}/js"
+
+repositories {
+	jcenter()
+	mavenCentral()
+    maven { url "https://jitpack.io" }
+	maven { url "http://repository.jetbrains.com/all" }
+}
+
+configurations {
+	ktlint
+}
+
+sourceSets {
+	main.kotlin.srcDirs += '../src/main/kotlin'
+}
+
+dependencies {
+    compile 'com.github.pardom.redux-kotlin:js:1.0.1'
+}
+
+compileKotlin2Js {
+	kotlinOptions.sourceMap = true
+	kotlinOptions.outputFile = "${outDir}/${slug}.js"
+	kotlinOptions.suppressWarnings = true
+	kotlinOptions.verbose = true
+}
+
+jar {
+	from sourceSets.main.allSource
+	include "**/*.kt"
+
+	from outDir
+	include "**/*.js"
+
+	manifest {
+		attributes(
+				"Specification-Title": "Redux Kotlin Logger",
+				"Kotlin-JS-Module-Name": slug
+		)
+	}
+}
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+	classifier = 'sources'
+	from sourceSets.main.allSource
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+	classifier = 'javadoc'
+	from javadoc.destinationDir
+}
+
+artifacts {
+	archives sourcesJar
+	archives javadocJar
+}
+
+jar.dependsOn(compileKotlin2Js)

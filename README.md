@@ -1,7 +1,7 @@
 [![Build Status](https://travis-ci.org/pardom/redux-logger-kotlin.svg?branch=master)](https://travis-ci.org/pardom/redux-logger-kotlin)
 [![](https://jitpack.io/v/pardom/redux-logger-kotlin.svg)](https://jitpack.io/#pardom/redux-logger-kotlin)
 
-# redux-logger-kotlin
+# Redux Logger
 Redux logger middleware for Kotlin
 
 Download
@@ -15,5 +15,9 @@ repositories {
 ```
 
 ```groovy
-compile 'com.github.pardom:redux-logger-kotlin:-SNAPSHOT'
+// JVM / Android
+compile 'com.github.pardom.redux-logger-kotlin:lib:1.0.0'
+
+// JavaScript
+compile 'com.github.pardom.redux-logger-kotlin:js:1.0.0'
 ```
