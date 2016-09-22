@@ -15,7 +15,7 @@ sourceSets {
 }
 
 dependencies {
-    compile 'com.github.pardom.redux-kotlin:js:1.0.1'
+    compile 'com.github.pardom.redux-kotlin:js:1.0.2'
 }
 
 compileKotlin2Js {
