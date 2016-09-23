@@ -16,8 +16,8 @@ repositories {
 
 ```groovy
 // JVM / Android
-compile 'com.github.pardom.redux-logger-kotlin:lib:1.0.0'
+compile 'com.github.pardom.redux-logger-kotlin:lib:1.0.1'
 
 // JavaScript
-compile 'com.github.pardom.redux-logger-kotlin:js:1.0.0'
+compile 'com.github.pardom.redux-logger-kotlin:js:1.0.1'
 ```
