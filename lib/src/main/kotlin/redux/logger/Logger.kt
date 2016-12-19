@@ -1,8 +1,5 @@
 package redux.logger
 
-import redux.logger.Logger.Event.DISPATCH
-import redux.logger.Logger.Event.STATE
-
 /*
  * Copyright (C) 2016 Michael Pardo
  *
@@ -25,17 +22,6 @@ interface Logger<in S : Any> {
 
     enum class Event {
         DISPATCH, STATE
-    }
-
-    class ConsoleLogger<in S : Any> : Logger<S> {
-
-        override fun log(event: Event, action: Any, state: S) {
-            when (event) {
-                DISPATCH -> println("Dispatching action: $action")
-                STATE -> println("Next state: $state")
-            }
-        }
-
     }
 
 }

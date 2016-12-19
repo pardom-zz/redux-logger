@@ -1,9 +1,6 @@
 package redux.logger
 
-import redux.Dispatcher
-import redux.Middleware
-import redux.Store
-import redux.logger.Logger.ConsoleLogger
+import redux.api.enhancer.Middleware
 import redux.logger.Logger.Event.DISPATCH
 import redux.logger.Logger.Event.STATE
 
@@ -23,27 +20,11 @@ import redux.logger.Logger.Event.STATE
  * limitations under the License.
  */
 
-class LoggerMiddleware<S : Any> : Middleware<S> {
-
-    private val logger: Logger<S>
-
-    private constructor(logger: Logger<S>) {
-        this.logger = logger
-    }
-
-    override fun dispatch(store: Store<S>, action: Any, next: Dispatcher): Any {
-        logger.log(DISPATCH, action, store.getState())
+fun <S : Any> createLoggerMiddleware(logger: Logger<S>): Middleware<S> {
+    return Middleware { store, next, action ->
+        logger.log(DISPATCH, action, store.state)
         val result = next.dispatch(action)
-        logger.log(STATE, action, store.getState())
-        return result
+        logger.log(STATE, action, store.state)
+        result
     }
-
-    companion object {
-
-        fun <S : Any> create(logger: Logger<S> = ConsoleLogger()): LoggerMiddleware<S> {
-            return LoggerMiddleware(logger)
-        }
-
-    }
-
 }

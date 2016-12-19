@@ -1,6 +1,9 @@
 package redux.logger
 
 import org.jetbrains.spek.api.Spek
+import org.jetbrains.spek.api.dsl.describe
+import org.junit.platform.runner.JUnitPlatform
+import org.junit.runner.RunWith
 
 /*
  * Copyright (C) 2016 Michael Pardo
@@ -18,6 +21,7 @@ import org.jetbrains.spek.api.Spek
  * limitations under the License.
  */
 
+@RunWith(JUnitPlatform::class)
 class LoggerMiddlewareTest : Spek({
 
     describe("LoggerMiddleware") {
