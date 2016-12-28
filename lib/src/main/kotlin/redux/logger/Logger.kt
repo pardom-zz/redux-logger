@@ -24,4 +24,16 @@ interface Logger<in S : Any> {
         DISPATCH, STATE
     }
 
+    companion object {
+
+        operator fun <S : Any> invoke(f: (event: Event, action: Any, state: S) -> Any?): Logger<S> {
+            return object : Logger<S> {
+                override fun log(event: Event, action: Any, state: S) {
+                    f(event, action, state)
+                }
+            }
+        }
+
+    }
+
 }
