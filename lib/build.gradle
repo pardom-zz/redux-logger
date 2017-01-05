@@ -17,6 +17,7 @@ sourceSets {
 
 dependencies {
 	compile 'com.github.jvm-redux.jvm-redux-api:api:1.2.0'
+	compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
 
 	testCompile 'junit:junit:4.12'
 	testCompile 'com.nhaarman:mockito-kotlin:1.0.1'
