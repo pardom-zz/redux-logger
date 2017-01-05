@@ -128,20 +128,6 @@ class DiffTest : Spek({
                 ) { changes }
             }
 
-            it("does not inspect excluded types") {
-                val amanda = User("Amanda")
-                val todo1 = AssignedTodo("Get milk", false, User("Michael"))
-                val todo2 = AssignedTodo("Get milk", true, User("Michael", amanda))
-
-                val changes = Diff.calculate(todo1, todo2, listOf(User::class.java))
-
-                expect(
-                    listOf(
-                        Change.Modification("done", false, true)
-                    )
-                ) { changes }
-            }
-
         }
 
     }

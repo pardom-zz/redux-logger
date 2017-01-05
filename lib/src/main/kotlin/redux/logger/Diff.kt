@@ -59,14 +59,10 @@ object Diff {
 
     }
 
-    fun calculate(
-        old: Any?,
-        new: Any?,
-        filter: List<Class<*>> = emptyList()): List<Change> {
-
+    fun calculate(old: Any?, new: Any?): List<Change> {
         return compare(
-            inspect(old, filter),
-            inspect(new, filter)
+            inspect(old),
+            inspect(new)
         )
     }
 
@@ -93,18 +89,17 @@ object Diff {
         return additions + deletions + modifications
     }
 
-    private fun inspect(obj: Any?, filter: List<Class<*>>): Map<String, Any?>? {
+    private fun inspect(obj: Any?): Map<String, Any?>? {
         return obj
             ?.javaClass
             ?.declaredFields
-            ?.filter { it.type !in filter }
             ?.map {
                 it.isAccessible = true
                 it.name to if (it.type.isPrimitive || (BASIC_TYPES).contains(it.type)) {
                     it.get(obj)
                 }
                 else {
-                    inspect(it.get(obj), filter)
+                    inspect(it.get(obj))
                 }
             }
             ?.toMap()

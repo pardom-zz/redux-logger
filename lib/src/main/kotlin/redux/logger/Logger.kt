@@ -1,5 +1,7 @@
 package redux.logger
 
+import redux.logger.Diff.Change
+
 /*
  * Copyright (C) 2016 Michael Pardo
  *
@@ -18,18 +20,24 @@ package redux.logger
 
 interface Logger<in S : Any> {
 
-    fun log(event: Event, action: Any, state: S)
+    data class Entry<out S : Any>(
+        val action: Any,
+        val oldState: S,
+        val newState: S,
+        val startTime: Long,
+        val endTime: Long,
+        val duration: Long,
+        val diff: List<Change>?
+    )
 
-    enum class Event {
-        DISPATCH, STATE
-    }
+    fun log(entry: Entry<S>)
 
     companion object {
 
-        operator fun <S : Any> invoke(f: (event: Event, action: Any, state: S) -> Any?): Logger<S> {
+        operator fun <S : Any> invoke(f: (entry: Entry<S>) -> Any?): Logger<S> {
             return object : Logger<S> {
-                override fun log(event: Event, action: Any, state: S) {
-                    f(event, action, state)
+                override fun log(entry: Entry<S>) {
+                    f(entry)
                 }
             }
         }

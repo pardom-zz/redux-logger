@@ -1,8 +1,8 @@
 package redux.logger
 
+import redux.api.Store
 import redux.api.enhancer.Middleware
-import redux.logger.Logger.Event.DISPATCH
-import redux.logger.Logger.Event.STATE
+import redux.logger.Logger.Entry
 
 /*
  * Copyright (C) 2016 Michael Pardo
@@ -20,11 +20,40 @@ import redux.logger.Logger.Event.STATE
  * limitations under the License.
  */
 
-fun <S : Any> createLoggerMiddleware(logger: Logger<S>): Middleware<S> {
+fun <S : Any> createLoggerMiddleware(
+    logger: Logger<S>,
+    predicate: (Any, Store<S>) -> Boolean = { action, store -> true },
+    diffPredicate: (Any, Store<S>) -> Boolean = { action, store -> false }): Middleware<S> {
+
     return Middleware { store, next, action ->
-        logger.log(DISPATCH, action, store.state)
-        val result = next.dispatch(action)
-        logger.log(STATE, action, store.state)
-        result
+        if (!predicate(action, store)) {
+            next.dispatch(action)
+        }
+        else {
+            val startTime = System.currentTimeMillis()
+            val oldState = store.state
+            val result = next.dispatch(action)
+            val newState = store.state
+            val endTime = System.currentTimeMillis()
+
+            val diff = when {
+                diffPredicate(action, store) -> Diff.calculate(oldState, newState)
+                else -> null
+            }
+
+            logger.log(
+                Entry(
+                    action,
+                    oldState,
+                    newState,
+                    startTime,
+                    endTime,
+                    endTime - startTime,
+                    diff
+                )
+            )
+
+            result
+        }
     }
 }
