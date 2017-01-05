@@ -111,17 +111,11 @@ class DiffTest : Spek({
                 val changes = Diff.calculate(todo1, todo2)
                 val expected = listOf(
                     Change.Modification(
-                        "user",
+                        "user.director",
+                        null,
                         mapOf(
-                            "name" to "Michael",
-                            "director" to null
-                        ),
-                        mapOf(
-                            "name" to "Michael",
-                            "director" to mapOf(
-                                "name" to "Amanda",
-                                "director" to null
-                            )
+                            "user.director.name" to "Amanda",
+                            "user.director.director" to null
                         )
                     )
                 )

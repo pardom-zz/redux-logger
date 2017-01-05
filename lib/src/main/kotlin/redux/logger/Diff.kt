@@ -9,6 +9,8 @@ import java.util.Date
 
 object Diff {
 
+    private val MAP_CLASS = Map::class.java
+
     private val BASIC_TYPES = listOf(
         Byte::class.java,
         Short::class.java,
@@ -86,12 +88,24 @@ object Diff {
         val modifications = oldKeys
             .intersect(newKeys)
             .filter { old?.get(it) != new?.get(it) }
-            .map { Modification(it, old?.get(it), new?.get(it)) }
+            .map {
+                val oldValue = old?.get(it)
+                val newValue = new?.get(it)
+                val comparable = oldValue != null && newValue != null
+                    && Map::class.java.isAssignableFrom(oldValue.javaClass)
+                    && Map::class.java.isAssignableFrom(newValue.javaClass)
+
+                when {
+                    comparable -> compare(oldValue as Map<String, Any?>, newValue as Map<String, Any?>)
+                    else -> listOf(Modification(it, old?.get(it), new?.get(it)))
+                }
+            }
+            .flatten()
 
         return additions + deletions + modifications
     }
 
-    private fun inspect(obj: Any?): Map<String, Any?>? {
+    private fun inspect(obj: Any?, parentName: String = ""): Map<String, Any?>? {
         return obj
             ?.javaClass
             ?.declaredMethods
@@ -101,7 +115,7 @@ object Diff {
             ?.filter { it.name.startsWith("is") || it.name.startsWith("get") }
             ?.filter { it.name != "getClass" }
             ?.map {
-                val name = it.name
+                val name = parentName + it.name
                     .removePrefix("is")
                     .removePrefix("get")
                     .toLowerCase()
@@ -110,7 +124,7 @@ object Diff {
                     || returnType.typeParameters.isNotEmpty()
                     || returnType in BASIC_TYPES
 
-                name to if (comparable) it.invoke(obj) else inspect(it.invoke(obj))
+                name to if (comparable) it.invoke(obj) else inspect(it.invoke(obj), "$name.")
             }
             ?.toMap()
     }
