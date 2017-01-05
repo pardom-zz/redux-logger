@@ -21,6 +21,7 @@ dependencies {
 
 	testCompile 'junit:junit:4.12'
 	testCompile 'com.nhaarman:mockito-kotlin:1.0.1'
+	testCompile 'org.assertj:assertj-core:3.6.1'
 	testCompile 'org.jetbrains.spek:spek-api:1.1.0-beta2'
 	testCompile 'org.jetbrains.spek:spek-junit-platform-engine:1.1.0-beta2'
 	testCompile 'org.jetbrains.kotlin:kotlin-test:1.0.5-3'
