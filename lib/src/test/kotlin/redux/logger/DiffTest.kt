@@ -1,13 +1,14 @@
 package redux.logger
 
+import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
 import org.junit.platform.runner.JUnitPlatform
 import org.junit.runner.RunWith
 import redux.logger.Diff.Change
+import redux.logger.Diff.Change.Modification
 import java.util.Date
-import kotlin.test.expect
 
 /*
  * Copyright (C) 2016 Michael Pardo
@@ -50,6 +51,10 @@ class DiffTest : Spek({
         val user: User
     )
 
+    data class Todos(
+        val todos: List<Todo>
+    )
+
     describe("Diff") {
 
         describe("calculate") {
@@ -61,13 +66,12 @@ class DiffTest : Spek({
                 val todo2 = DatedTodo("Get milk", Date(then), true)
 
                 val changes = Diff.calculate(todo1, todo2)
+                val expected = listOf(
+                    Change.Modification("date", Date(now), Date(then)),
+                    Change.Modification("done", false, true)
+                )
 
-                expect(
-                    listOf(
-                        Change.Modification("date", Date(now), Date(then)),
-                        Change.Modification("done", false, true)
-                    )
-                ) { changes }
+                assertThat(changes).hasSameElementsAs(expected)
             }
 
             it("detects additions") {
@@ -77,13 +81,12 @@ class DiffTest : Spek({
                 val todo2 = DatedTodo("Get milk", Date(then), true)
 
                 val changes = Diff.calculate(todo1, todo2)
+                val expected = listOf(
+                    Change.Addition("date", Date(then)),
+                    Change.Modification("done", false, true)
+                )
 
-                expect(
-                    listOf(
-                        Change.Addition("date", Date(then)),
-                        Change.Modification("done", false, true)
-                    )
-                ) { changes }
+                assertThat(changes).hasSameElementsAs(expected)
             }
 
             it("detects deletions") {
@@ -92,13 +95,12 @@ class DiffTest : Spek({
                 val todo2 = Todo("Get milk", true)
 
                 val changes = Diff.calculate(todo1, todo2)
+                val expected = listOf(
+                    Change.Deletion("date", Date(now)),
+                    Change.Modification("done", false, true)
+                )
 
-                expect(
-                    listOf(
-                        Change.Deletion("date", Date(now)),
-                        Change.Modification("done", false, true)
-                    )
-                ) { changes }
+                assertThat(changes).hasSameElementsAs(expected)
             }
 
             it("handles recursive modifications") {
@@ -107,25 +109,44 @@ class DiffTest : Spek({
                 val todo2 = AssignedTodo("Get milk", false, User("Michael", amanda))
 
                 val changes = Diff.calculate(todo1, todo2)
-
-                expect(
-                    listOf(
-                        Change.Modification(
-                            "user",
-                            mapOf(
-                                "name" to "Michael",
+                val expected = listOf(
+                    Change.Modification(
+                        "user",
+                        mapOf(
+                            "name" to "Michael",
+                            "director" to null
+                        ),
+                        mapOf(
+                            "name" to "Michael",
+                            "director" to mapOf(
+                                "name" to "Amanda",
                                 "director" to null
-                            ),
-                            mapOf(
-                                "name" to "Michael",
-                                "director" to mapOf(
-                                    "name" to "Amanda",
-                                    "director" to null
-                                )
                             )
                         )
                     )
-                ) { changes }
+                )
+
+                assertThat(changes).hasSameElementsAs(expected)
+            }
+
+            it("handles lists") {
+                val todos1 = Todos(listOf(
+                    Todo("Get milk", false),
+                    Todo("Walk the dog", false),
+                    Todo("Call Mom", false)
+                ))
+                val todos2 = Todos(listOf(
+                    Todo("Get milk", true),
+                    Todo("Walk the dog", false),
+                    Todo("Call Mom", true)
+                ))
+
+                val changes = Diff.calculate(todos1, todos2)
+                val expected = listOf(
+                    Modification("todos", todos1.todos, todos2.todos)
+                )
+
+                assertThat(changes).hasSameElementsAs(expected)
             }
 
         }

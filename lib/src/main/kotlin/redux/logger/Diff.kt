@@ -3,7 +3,9 @@ package redux.logger
 import redux.logger.Diff.Change.Addition
 import redux.logger.Diff.Change.Deletion
 import redux.logger.Diff.Change.Modification
+import java.lang.reflect.Modifier
 import java.util.Date
+
 
 object Diff {
 
@@ -92,15 +94,23 @@ object Diff {
     private fun inspect(obj: Any?): Map<String, Any?>? {
         return obj
             ?.javaClass
-            ?.declaredFields
+            ?.declaredMethods
+            ?.filter { Modifier.isPublic(it.modifiers) }
+            ?.filter { it.parameterTypes.isEmpty() }
+            ?.filter { it.returnType != Void.TYPE }
+            ?.filter { it.name.startsWith("is") || it.name.startsWith("get") }
+            ?.filter { it.name != "getClass" }
             ?.map {
-                it.isAccessible = true
-                it.name to if (it.type.isPrimitive || (BASIC_TYPES).contains(it.type)) {
-                    it.get(obj)
-                }
-                else {
-                    inspect(it.get(obj))
-                }
+                val name = it.name
+                    .removePrefix("is")
+                    .removePrefix("get")
+                    .toLowerCase()
+                val returnType = it.returnType
+                val comparable = returnType.isPrimitive
+                    || returnType.typeParameters.isNotEmpty()
+                    || returnType in BASIC_TYPES
+
+                name to if (comparable) it.invoke(obj) else inspect(it.invoke(obj))
             }
             ?.toMap()
     }
