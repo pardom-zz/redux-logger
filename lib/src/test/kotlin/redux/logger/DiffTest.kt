@@ -29,42 +29,6 @@ import java.util.Date
 @RunWith(JUnitPlatform::class)
 class DiffTest : Spek({
 
-    data class User(
-        val name: String,
-        val director: User? = null
-    )
-
-    data class Todo(
-        val title: String,
-        val done: Boolean
-    )
-
-    data class DatedTodo(
-        val title: String,
-        val date: Date,
-        val done: Boolean
-    )
-
-    data class AssignedTodo(
-        val title: String,
-        val done: Boolean,
-        val user: User
-    )
-
-    data class Box<out T : Any>(
-        val value: T
-    )
-
-    data class GenericTodo(
-        val title: String,
-        val done: Box<Box<Boolean>>
-    )
-
-    data class MapTodo(
-        val title: String,
-        val properties: Map<String, Any?>
-    )
-
     describe("Diff") {
 
         describe("calculate") {
@@ -108,6 +72,33 @@ class DiffTest : Spek({
                 val expected = listOf(
                     Change.Deletion("date", Date(now)),
                     Change.Modification("done", false, true)
+                )
+
+                assertThat(changes).hasSameElementsAs(expected)
+            }
+
+            it("handles enumerations") {
+                val todo1 = EnumTodo("Get milk", EnumTodo.Status.PENDING)
+                val todo2 = EnumTodo("Get milk", EnumTodo.Status.COMPLETE)
+
+                val changes = Diff.calculate(todo1, todo2)
+                val expected = listOf(
+                    Change.Modification("status", EnumTodo.Status.PENDING, EnumTodo.Status.COMPLETE)
+                )
+
+                assertThat(changes).hasSameElementsAs(expected)
+            }
+
+            it("handles arrays") {
+                val todo1 = ArrayTodo("Get milk", false, arrayOf("kitchen"))
+                val todo2 = ArrayTodo("Get milk", false, arrayOf("kitchen", "recurring"))
+
+                val changes = Diff.calculate(todo1, todo2)
+                val expected = listOf(
+                    Change.Modification(
+                        "tags",
+                        arrayOf("kitchen"),
+                        arrayOf("kitchen", "recurring"))
                 )
 
                 assertThat(changes).hasSameElementsAs(expected)
@@ -170,4 +161,57 @@ class DiffTest : Spek({
 
     }
 
-})
+}) {
+
+    data class User(
+        val name: String,
+        val director: User? = null
+    )
+
+    data class Todo(
+        val title: String,
+        val done: Boolean
+    )
+
+    data class DatedTodo(
+        val title: String,
+        val date: Date,
+        val done: Boolean
+    )
+
+    data class EnumTodo(
+        val title: String,
+        val status: Status
+    ) {
+        enum class Status {
+            PENDING, IN_PROGRESS, COMPLETE
+        }
+    }
+
+    data class ArrayTodo(
+        val title: String,
+        val done: Boolean,
+        val tags: Array<String>
+    )
+
+    data class AssignedTodo(
+        val title: String,
+        val done: Boolean,
+        val user: User
+    )
+
+    data class Box<out T : Any>(
+        val value: T
+    )
+
+    data class GenericTodo(
+        val title: String,
+        val done: Box<Box<Boolean>>
+    )
+
+    data class MapTodo(
+        val title: String,
+        val properties: Map<String, Any?>
+    )
+
+}

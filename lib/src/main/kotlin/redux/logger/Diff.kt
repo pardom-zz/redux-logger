@@ -5,38 +5,35 @@ import redux.logger.Diff.Change.Deletion
 import redux.logger.Diff.Change.Modification
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
+import java.util.Arrays
 
 object Diff {
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // Private constants
 
     private val COMPARABLE_PACKAGES = listOf(
         "java.lang",
         "java.util"
     )
 
-    private val METHOD_CACHE = mutableMapOf<Class<*>, List<Method>>()
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // Private members
 
-    interface Change {
+    private val methodCache = mutableMapOf<Class<*>, List<Method>>()
 
-        data class Modification(val name: String, val oldValue: Any?, val newValue: Any?) : Change {
-            override fun toString() = "∆ $name: $oldValue → $newValue"
-        }
-
-        data class Addition(val name: String, val value: Any?) : Change {
-            override fun toString() = "+ $name: $value"
-        }
-
-        data class Deletion(val name: String, val value: Any?) : Change {
-            override fun toString() = "− $name: $value"
-        }
-
-    }
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // Public functions
 
     fun calculate(old: Any?, new: Any?): List<Change> {
         return compare(
-            inspect(old),
-            inspect(new)
+            createMap(old),
+            createMap(new)
         )
     }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // Private functions
 
     private fun compare(
         old: Map<String, Any?>?,
@@ -77,7 +74,7 @@ object Diff {
         return additions + deletions + modifications
     }
 
-    private fun inspect(obj: Any?, parentName: String = ""): Map<String, Any?>? {
+    private fun createMap(obj: Any?, parentName: String = ""): Map<String, Any?>? {
         return getProperties(obj)
             ?.map {
                 val name = parentName + it.name
@@ -88,12 +85,14 @@ object Diff {
                 val value = it.invoke(obj)
                 val comparable = if (value != null) {
                     val type = value.javaClass
-                    val packageName = type.`package`.name
-                    type.isPrimitive || packageName in COMPARABLE_PACKAGES
+                    type.isPrimitive
+                        || type.isArray
+                        || type.isEnum
+                        || type.`package`.name in COMPARABLE_PACKAGES
                 }
                 else true
 
-                name to if (comparable) value else inspect(value, "$name.")
+                name to if (comparable) value else createMap(value, "$name.")
             }
             ?.toMap()
     }
@@ -101,7 +100,7 @@ object Diff {
     private fun getProperties(obj: Any?): List<Method>? {
         if (obj == null) return null
 
-        return METHOD_CACHE[obj.javaClass] ?: obj
+        return methodCache[obj.javaClass] ?: obj
             .javaClass
             .declaredMethods
             .filter { Modifier.isPublic(it.modifiers) }
@@ -109,7 +108,112 @@ object Diff {
             .filter { it.returnType != Void.TYPE }
             .filter { it.name.startsWith("is") || it.name.startsWith("get") }
             .filter { it.name != "getClass" }
-            .apply { METHOD_CACHE.put(obj.javaClass, this) }
+            .apply { methodCache.put(obj.javaClass, this) }
+    }
+
+    private fun Any?.isEqualTo(obj: Any?): Boolean {
+        return when {
+            this is Array<*> && obj is Array<*> -> Arrays.deepEquals(this, obj)
+            else -> this == obj
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // Classes
+
+    sealed class Change {
+
+        class Modification(val name: String, val oldValue: Any?, val newValue: Any?) : Change() {
+
+            override fun equals(other: Any?): Boolean {
+                if (this === other) return true
+                if (other?.javaClass != javaClass) return false
+
+                other as Modification
+
+                if (name != other.name) return false
+                if (!oldValue.isEqualTo(other.oldValue)) return false
+                if (!newValue.isEqualTo(other.newValue)) return false
+
+                return true
+            }
+
+            override fun hashCode(): Int {
+                var result = name.hashCode()
+                result = 31 * result + (oldValue?.hashCode() ?: 0)
+                result = 31 * result + (newValue?.hashCode() ?: 0)
+                return result
+            }
+
+            override fun toString(): String {
+                val sb = StringBuilder()
+                sb.append("∆ $name: ")
+                sb.append(if (oldValue is Array<*>) Arrays.toString(oldValue) else "$oldValue")
+                sb.append(" → ")
+                sb.append(if (newValue is Array<*>) Arrays.toString(newValue) else "$newValue")
+                return sb.toString()
+            }
+
+        }
+
+        class Addition(val name: String, val value: Any?) : Change() {
+
+            override fun equals(other: Any?): Boolean {
+                if (this === other) return true
+                if (other?.javaClass != javaClass) return false
+
+                other as Addition
+
+                if (name != other.name) return false
+                if (!value.isEqualTo(other.value)) return false
+
+                return true
+            }
+
+            override fun hashCode(): Int {
+                var result = name.hashCode()
+                result = 31 * result + (value?.hashCode() ?: 0)
+                return result
+            }
+
+            override fun toString(): String {
+                val sb = StringBuilder()
+                sb.append("+ $name: ")
+                sb.append(if (value is Array<*>) Arrays.toString(value) else "$value")
+                return sb.toString()
+            }
+
+        }
+
+        class Deletion(val name: String, val value: Any?) : Change() {
+
+            override fun equals(other: Any?): Boolean {
+                if (this === other) return true
+                if (other?.javaClass != javaClass) return false
+
+                other as Deletion
+
+                if (name != other.name) return false
+                if (!value.isEqualTo(other.value)) return false
+
+                return true
+            }
+
+            override fun hashCode(): Int {
+                var result = name.hashCode()
+                result = 31 * result + (value?.hashCode() ?: 0)
+                return result
+            }
+
+            override fun toString(): String {
+                val sb = StringBuilder()
+                sb.append("- $name: ")
+                sb.append(if (value is Array<*>) Arrays.toString(value) else "$value")
+                return sb.toString()
+            }
+
+        }
+
     }
 
 }
