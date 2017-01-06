@@ -3,60 +3,30 @@ package redux.logger
 import redux.logger.Diff.Change.Addition
 import redux.logger.Diff.Change.Deletion
 import redux.logger.Diff.Change.Modification
+import java.lang.reflect.Method
 import java.lang.reflect.Modifier
-import java.util.Date
 
 object Diff {
 
-    private val BASIC_TYPES = listOf(
-        Any::class.java,
-        Byte::class.java,
-        Short::class.java,
-        Int::class.java,
-        Long::class.java,
-        Float::class.java,
-        Double::class.java,
-        Boolean::class.java,
-        Char::class.java,
-        String::class.java,
-        Date::class.java,
-        Void::class.java
+    private val COMPARABLE_PACKAGES = listOf(
+        "java.lang",
+        "java.util"
     )
 
-    sealed class Change {
+    private val METHOD_CACHE = mutableMapOf<Class<*>, List<Method>>()
 
-        class Modification(val name: String, val oldValue: Any?, val newValue: Any?) : Change() {
+    interface Change {
 
-            override fun equals(other: Any?) =
-                other is Modification
-                    && name == other.name
-                    && oldValue == other.oldValue
-                    && newValue == other.newValue
-
+        data class Modification(val name: String, val oldValue: Any?, val newValue: Any?) : Change {
             override fun toString() = "∆ $name: $oldValue → $newValue"
-
         }
 
-        class Addition(val name: String, val value: Any?) : Change() {
-
-            override fun equals(other: Any?) =
-                other is Addition
-                    && name == other.name
-                    && value == other.value
-
+        data class Addition(val name: String, val value: Any?) : Change {
             override fun toString() = "+ $name: $value"
-
         }
 
-        class Deletion(val name: String, val value: Any?) : Change() {
-
-            override fun equals(other: Any?) =
-                other is Deletion
-                    && name == other.name
-                    && value == other.value
-
+        data class Deletion(val name: String, val value: Any?) : Change {
             override fun toString() = "− $name: $value"
-
         }
 
     }
@@ -93,8 +63,12 @@ object Diff {
                     && Map::class.java.isAssignableFrom(oldValue.javaClass)
                     && Map::class.java.isAssignableFrom(newValue.javaClass)
 
+                @Suppress("UNCHECKED_CAST")
                 when {
-                    comparable -> compare(oldValue as Map<String, Any?>, newValue as Map<String, Any?>)
+                    comparable -> compare(
+                        oldValue as Map<String, Any?>,
+                        newValue as Map<String, Any?>
+                    )
                     else -> listOf(Modification(it, old?.get(it), new?.get(it)))
                 }
             }
@@ -104,26 +78,38 @@ object Diff {
     }
 
     private fun inspect(obj: Any?, parentName: String = ""): Map<String, Any?>? {
-        return obj
-            ?.javaClass
-            ?.declaredMethods
-            ?.filter { Modifier.isPublic(it.modifiers) }
-            ?.filter { it.parameterTypes.isEmpty() }
-            ?.filter { it.returnType != Void.TYPE }
-            ?.filter { it.name.startsWith("is") || it.name.startsWith("get") }
-            ?.filter { it.name != "getClass" }
+        return getProperties(obj)
             ?.map {
                 val name = parentName + it.name
                     .removePrefix("is")
                     .removePrefix("get")
                     .toLowerCase()
 
-                val returnType = it.returnType
-                val comparable = returnType.isPrimitive || returnType in BASIC_TYPES
+                val value = it.invoke(obj)
+                val comparable = if (value != null) {
+                    val type = value.javaClass
+                    val packageName = type.`package`.name
+                    type.isPrimitive || packageName in COMPARABLE_PACKAGES
+                }
+                else true
 
-                name to if (comparable) it.invoke(obj) else inspect(it.invoke(obj), "$name.")
+                name to if (comparable) value else inspect(value, "$name.")
             }
             ?.toMap()
+    }
+
+    private fun getProperties(obj: Any?): List<Method>? {
+        if (obj == null) return null
+
+        return METHOD_CACHE[obj.javaClass] ?: obj
+            .javaClass
+            .declaredMethods
+            .filter { Modifier.isPublic(it.modifiers) }
+            .filter { it.parameterTypes.isEmpty() }
+            .filter { it.returnType != Void.TYPE }
+            .filter { it.name.startsWith("is") || it.name.startsWith("get") }
+            .filter { it.name != "getClass" }
+            .apply { METHOD_CACHE.put(obj.javaClass, this) }
     }
 
 }

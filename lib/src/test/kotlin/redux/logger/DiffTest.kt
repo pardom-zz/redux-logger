@@ -57,7 +57,12 @@ class DiffTest : Spek({
 
     data class GenericTodo(
         val title: String,
-        val done: Box<Boolean>
+        val done: Box<Box<Boolean>>
+    )
+
+    data class MapTodo(
+        val title: String,
+        val properties: Map<String, Any?>
     )
 
     describe("Diff") {
@@ -129,12 +134,33 @@ class DiffTest : Spek({
             }
 
             it("handles generics") {
-                val todo1 = GenericTodo("Get milk", Box(false))
-                val todo2 = GenericTodo("Get milk", Box(true))
+                val todo1 = GenericTodo("Get milk", Box(Box(false)))
+                val todo2 = GenericTodo("Get milk", Box(Box(true)))
 
                 val changes = Diff.calculate(todo1, todo2)
                 val expected = listOf(
-                    Modification("done.value", todo1.done.value, todo2.done.value)
+                    Modification("done.value.value", todo1.done.value.value, todo2.done.value.value)
+                )
+
+                assertThat(changes).hasSameElementsAs(expected)
+            }
+
+            it("does not conflict with input maps") {
+                val now = System.currentTimeMillis()
+                val then = now + 1000 * 60 * 60 * 3
+                val todo1 = MapTodo("Get milk", mapOf(
+                    "date" to Date(now),
+                    "done" to false
+                ))
+                val todo2 = MapTodo("Get milk", mapOf(
+                    "date" to Date(then),
+                    "done" to true
+                ))
+
+                val changes = Diff.calculate(todo1, todo2)
+                val expected = listOf(
+                    Change.Modification("date", Date(now), Date(then)),
+                    Change.Modification("done", false, true)
                 )
 
                 assertThat(changes).hasSameElementsAs(expected)
