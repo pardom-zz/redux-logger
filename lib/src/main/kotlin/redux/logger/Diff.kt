@@ -12,6 +12,7 @@ object Diff {
     private val MAP_CLASS = Map::class.java
 
     private val BASIC_TYPES = listOf(
+        Any::class.java,
         Byte::class.java,
         Short::class.java,
         Int::class.java,
@@ -119,10 +120,9 @@ object Diff {
                     .removePrefix("is")
                     .removePrefix("get")
                     .toLowerCase()
+
                 val returnType = it.returnType
-                val comparable = returnType.isPrimitive
-                    || returnType.typeParameters.isNotEmpty()
-                    || returnType in BASIC_TYPES
+                val comparable = returnType.isPrimitive || returnType in BASIC_TYPES
 
                 name to if (comparable) it.invoke(obj) else inspect(it.invoke(obj), "$name.")
             }

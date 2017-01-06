@@ -51,8 +51,13 @@ class DiffTest : Spek({
         val user: User
     )
 
-    data class Todos(
-        val todos: List<Todo>
+    data class Box<out T : Any>(
+        val value: T
+    )
+
+    data class GenericTodo(
+        val title: String,
+        val done: Box<Boolean>
     )
 
     describe("Diff") {
@@ -123,21 +128,13 @@ class DiffTest : Spek({
                 assertThat(changes).hasSameElementsAs(expected)
             }
 
-            it("handles lists") {
-                val todos1 = Todos(listOf(
-                    Todo("Get milk", false),
-                    Todo("Walk the dog", false),
-                    Todo("Call Mom", false)
-                ))
-                val todos2 = Todos(listOf(
-                    Todo("Get milk", true),
-                    Todo("Walk the dog", false),
-                    Todo("Call Mom", true)
-                ))
+            it("handles generics") {
+                val todo1 = GenericTodo("Get milk", Box(false))
+                val todo2 = GenericTodo("Get milk", Box(true))
 
-                val changes = Diff.calculate(todos1, todos2)
+                val changes = Diff.calculate(todo1, todo2)
                 val expected = listOf(
-                    Modification("todos", todos1.todos, todos2.todos)
+                    Modification("done.value", todo1.done.value, todo2.done.value)
                 )
 
                 assertThat(changes).hasSameElementsAs(expected)
