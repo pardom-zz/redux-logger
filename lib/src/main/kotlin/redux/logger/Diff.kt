@@ -8,8 +8,6 @@ import java.util.Date
 
 object Diff {
 
-    private val MAP_CLASS = Map::class.java
-
     private val BASIC_TYPES = listOf(
         Any::class.java,
         Byte::class.java,
