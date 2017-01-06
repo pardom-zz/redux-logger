@@ -1,6 +1,7 @@
 package redux.logger
 
 import com.nhaarman.mockito_kotlin.any
+import com.nhaarman.mockito_kotlin.atLeastOnce
 import com.nhaarman.mockito_kotlin.times
 import com.nhaarman.mockito_kotlin.verify
 import org.jetbrains.spek.api.Spek
@@ -41,6 +42,44 @@ class CreateLoggerMiddlewareTest : Spek({
     @Suppress("UNCHECKED_CAST")
     describe("createLoggerMiddleware") {
 
+        it("excludes diff by default") {
+            val store = mock(Store::class.java) as Store<State>
+            val logger = mock(Logger::class.java) as Logger<State>
+            val captor = ArgumentCaptor.forClass(Entry::class.java) as ArgumentCaptor<Entry<State>>
+            val loggerMiddleware = createLoggerMiddleware(logger)
+
+            upon(store.state).thenReturn(State(0))
+            loggerMiddleware.dispatch(store, {}, Unit)
+
+            verify(logger, atLeastOnce()).log(captor.capture() ?: uninitialized())
+            assertNull(captor.value.diff)
+
+            upon(store.state).thenReturn(State(1))
+            loggerMiddleware.dispatch(store, {}, Unit)
+
+            verify(logger, atLeastOnce()).log(captor.capture() ?: uninitialized())
+            assertNull(captor.value.diff)
+        }
+
+        it("obeys diff option") {
+            val store = mock(Store::class.java) as Store<State>
+            val logger = mock(Logger::class.java) as Logger<State>
+            val captor = ArgumentCaptor.forClass(Entry::class.java) as ArgumentCaptor<Entry<State>>
+            val loggerMiddleware = createLoggerMiddleware(logger, diff = true)
+
+            upon(store.state).thenReturn(State(0))
+            loggerMiddleware.dispatch(store, {}, Unit)
+
+            verify(logger, atLeastOnce()).log(captor.capture() ?: uninitialized())
+            assertNotNull(captor.value.diff)
+
+            upon(store.state).thenReturn(State(1))
+            loggerMiddleware.dispatch(store, {}, Unit)
+
+            verify(logger, atLeastOnce()).log(captor.capture() ?: uninitialized())
+            assertNotNull(captor.value.diff)
+        }
+
         it("obeys predicate") {
             val store = mock(Store::class.java) as Store<State>
             val logger = mock(Logger::class.java) as Logger<State>
@@ -50,7 +89,7 @@ class CreateLoggerMiddlewareTest : Spek({
                 predicateCalls++
                 store.state.count < 5
             }
-            val loggerMiddleware = createLoggerMiddleware(logger, predicate)
+            val loggerMiddleware = createLoggerMiddleware(logger, predicate = predicate)
 
             upon(store.state).thenReturn(State(0))
             loggerMiddleware.dispatch(store, {}, Unit)
@@ -58,7 +97,7 @@ class CreateLoggerMiddlewareTest : Spek({
             upon(store.state).thenReturn(State(10))
             loggerMiddleware.dispatch(store, {}, Unit)
 
-            verify(logger, times(1)).log(any())
+            verify(logger).log(any())
             assertEquals(2, predicateCalls)
         }
 
@@ -72,7 +111,11 @@ class CreateLoggerMiddlewareTest : Spek({
                 diffPredicateCalls++
                 store.state.count < 5
             }
-            val loggerMiddleware = createLoggerMiddleware(logger, diffPredicate = diffPredicate)
+            val loggerMiddleware = createLoggerMiddleware(
+                logger,
+                diff = true,
+                diffPredicate = diffPredicate
+            )
 
             upon(store.state).thenReturn(State(0))
             loggerMiddleware.dispatch(store, {}, Unit)

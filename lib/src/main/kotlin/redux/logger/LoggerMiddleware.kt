@@ -22,8 +22,9 @@ import redux.logger.Logger.Entry
 
 fun <S : Any> createLoggerMiddleware(
     logger: Logger<S>,
+    diff: Boolean = false,
     predicate: (Any, Store<S>) -> Boolean = { action, store -> true },
-    diffPredicate: (Any, Store<S>) -> Boolean = { action, store -> false }): Middleware<S> {
+    diffPredicate: (Any, Store<S>) -> Boolean = { action, store -> true }): Middleware<S> {
 
     return Middleware { store, next, action ->
         if (!predicate(action, store)) {
@@ -36,11 +37,6 @@ fun <S : Any> createLoggerMiddleware(
             val newState = store.state
             val endTime = System.currentTimeMillis()
 
-            val diff = when {
-                diffPredicate(action, store) -> Diff.calculate(oldState, newState)
-                else -> null
-            }
-
             logger.log(
                 Entry(
                     action,
@@ -49,7 +45,10 @@ fun <S : Any> createLoggerMiddleware(
                     startTime,
                     endTime,
                     endTime - startTime,
-                    diff
+                    when {
+                        diff && diffPredicate(action, store) -> Diff.calculate(oldState, newState)
+                        else -> null
+                    }
                 )
             )
 
