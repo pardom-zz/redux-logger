@@ -6,7 +6,6 @@ import redux.logger.Diff.Change.Modification
 import java.lang.reflect.Modifier
 import java.util.Date
 
-
 object Diff {
 
     private val MAP_CLASS = Map::class.java
