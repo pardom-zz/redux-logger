@@ -78,9 +78,8 @@ object Diff {
         return getProperties(obj)
             ?.map {
                 val name = parentName + it.name
-                    .removePrefix("is")
-                    .removePrefix("get")
-                    .toLowerCase()
+                    .replace(Regex("^(get|is)"), "")  // Kotlin property prefix
+                    .decapitalize()
 
                 val value = it.invoke(obj)
                 val comparable = if (value != null) {
@@ -106,7 +105,7 @@ object Diff {
             .filter { Modifier.isPublic(it.modifiers) }
             .filter { it.parameterTypes.isEmpty() }
             .filter { it.returnType != Void.TYPE }
-            .filter { it.name.startsWith("is") || it.name.startsWith("get") }
+            .filter { it.name.matches(Regex("^(get|is).*+$")) } // Kotlin properties
             .filter { it.name != "getClass" }
             .apply { methodCache.put(obj.javaClass, this) }
     }

@@ -41,7 +41,7 @@ class DiffTest : Spek({
 
                 val changes = Diff.calculate(todo1, todo2)
                 val expected = listOf(
-                    Change.Modification("date", Date(now), Date(then)),
+                    Change.Modification("lastModified", Date(now), Date(then)),
                     Change.Modification("done", false, true)
                 )
 
@@ -56,7 +56,7 @@ class DiffTest : Spek({
 
                 val changes = Diff.calculate(todo1, todo2)
                 val expected = listOf(
-                    Change.Addition("date", Date(then)),
+                    Change.Addition("lastModified", Date(then)),
                     Change.Modification("done", false, true)
                 )
 
@@ -70,7 +70,7 @@ class DiffTest : Spek({
 
                 val changes = Diff.calculate(todo1, todo2)
                 val expected = listOf(
-                    Change.Deletion("date", Date(now)),
+                    Change.Deletion("lastModified", Date(now)),
                     Change.Modification("done", false, true)
                 )
 
@@ -140,17 +140,17 @@ class DiffTest : Spek({
                 val now = System.currentTimeMillis()
                 val then = now + 1000 * 60 * 60 * 3
                 val todo1 = MapTodo("Get milk", mapOf(
-                    "date" to Date(now),
+                    "lastModified" to Date(now),
                     "done" to false
                 ))
                 val todo2 = MapTodo("Get milk", mapOf(
-                    "date" to Date(then),
+                    "lastModified" to Date(then),
                     "done" to true
                 ))
 
                 val changes = Diff.calculate(todo1, todo2)
                 val expected = listOf(
-                    Change.Modification("date", Date(now), Date(then)),
+                    Change.Modification("lastModified", Date(now), Date(then)),
                     Change.Modification("done", false, true)
                 )
 
@@ -175,7 +175,7 @@ class DiffTest : Spek({
 
     data class DatedTodo(
         val title: String,
-        val date: Date,
+        val lastModified: Date,
         val done: Boolean
     )
 
